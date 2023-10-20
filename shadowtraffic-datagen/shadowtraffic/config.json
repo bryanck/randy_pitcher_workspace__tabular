@@ -3,7 +3,18 @@
     {
       "topic": "reactions",
 
-      "key": "kafka_connect.reactions",
+      "vars" : {
+        "table_name" : {
+          "_gen": "string",
+          "expr": "bck_gen.tbl_#{number.number_between '0','1000'}"
+        }
+      },
+
+      "key" : {
+        "_gen" : "var",
+        "var" : "table_name"
+      },
+
       "value": {
         "generated_at": {
           "_gen": "now"
@@ -77,7 +88,13 @@
                 ]
             }
           ]
+        },
+
+        "target_table": {
+          "_gen" : "var",
+          "var" : "table_name"
         }
+
       }
     }
   ],

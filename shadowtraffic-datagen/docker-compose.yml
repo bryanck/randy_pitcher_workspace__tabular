@@ -22,16 +22,27 @@ services:
       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      - KAFKA_CFG_NUM_PARTITIONS=40
 
   kafka_connect:
-      image: docker.io/bitnami/kafka:3.5
-      container_name: kafka_connect
-      volumes:
-        - './tabular-sink/:/bitnami'
-      depends_on:
-        - kafka
-      command: connect-standalone.sh /bitnami/connect-standalone.properties /bitnami/tabular-sink.properties
+    image: docker.io/bitnami/kafka:3.5
+    container_name: kafka_connect
+    volumes:
+      - './tabular-sink/:/bitnami'
+    depends_on:
+      - kafka
+    environment:
+      - KAFKA_HEAP_OPTS=-Xmx16g
+    command: connect-distributed.sh /bitnami/connect-distributed.properties
 
+  kc_setup:
+    image: docker.io/bitnami/kafka:3.5
+    depends_on:
+      - kafka_connect
+    restart: "no"
+    volumes:
+      - './tabular-sink/:/bitnami'
+    entrypoint: [ "bash", "-c", "sleep 10 && curl --request POST --url http://kafka_connect:8083/connectors --header 'Content-Type: application/json' --data-binary '@/bitnami/tabular-sink.json'"]
 
   shadowtraffic:
     image: shadowtraffic/shadowtraffic:0.0.6
